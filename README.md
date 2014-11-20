@@ -4,8 +4,8 @@ Scan files for malware and other haxx
 
 ## Description
 
-malscan consists of a set of rules (rules.cfg) to be run against files that will detect
-possible malware, backdoors, and other related hacks that are often seen with outdated
+malscan consists of a set of rules (rules.cfg) crafted to detect possible
+malware, backdoors, and other related hacks that are often seen with outdated
 Wordpress, Joomla, etc, installs.
 
 ## Usage
