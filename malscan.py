@@ -11,7 +11,7 @@ def validate_patterns(rules):
     errors = 0
     nc = {}
     for rule, conf in rules.items():
-        nc[rule] = {'patterns':[], 'excludes':[], 'exact':False, 'sensitive':False}
+        nc[rule] = {'sha256':[], 'patterns':[], 'excludes':[], 'exact':False, 'sensitive':False}
         sensitive = 0
         exact = False
         if 'exact' in conf:
@@ -38,10 +38,16 @@ def validate_patterns(rules):
                 for p in conf['excludes']:
                     try:
                         nc[rule]['excludes'].append(re.compile(p))
-                    except Exception,e :        
+                    except Exception,e :
                         print "Bad exclude pattern:", rule, type(p), p, e
                         errors += 1
         else:
+            if 'sha256' in conf:
+                for p in conf['sha256']:
+                    nc[rule]['sha256'].append(p)
+
+            if not 'patterns' in conf: continue
+
             for p in conf['patterns']:
                 try:
                     nc[rule]['patterns'].append(re.compile(p, flags=re.IGNORECASE))
@@ -53,7 +59,7 @@ def validate_patterns(rules):
                 for p in conf['excludes']:
                     try:
                         nc[rule]['excludes'].append(re.compile(p, flags=re.IGNORECASE))
-                    except Exception,e :        
+                    except Exception,e :
                         print "Bad exclude pattern:", rule, type(p), p, e
                         errors += 1
     if errors > 1:
@@ -65,7 +71,13 @@ def chk_line(line, rules):
     for rule, conf in rules.items():
         ematch = 0
         failed = 0
+        # It's a hashlib check only
+        if not conf['patterns']:
+            continue
+
         if conf['exact']:
+            if not conf['patterns']:
+                nopatterns = 1
             for p in conf['patterns']:
                 if not p in line:
                     failed = 1 #didnt match all patterns
@@ -87,7 +99,29 @@ def chk_line(line, rules):
                         break
         if failed < 1 and ematch < 1:
             matches.append(rule)
-    
+
+    return matches
+
+def hashfile(fname, blocksize=65536):
+    import hashlib
+    f = open(fname, 'rb')
+    hasher = hashlib.sha256()
+    buf = f.read(blocksize)
+    while len(buf) > 0:
+        hasher.update(buf)
+        buf = f.read(blocksize)
+    f.close()
+    return hasher.hexdigest()
+
+def check_hashes(fpath, rules):
+    matches = []
+    for rule, conf in rules.items():
+        if not conf['sha256']: continue
+        h = hashfile(fpath)
+        for p in conf['sha256']:
+            if h == p:
+                matches.append(rule)
+                break
     return matches
 
 def process(path, rules):
@@ -105,14 +139,16 @@ def process(path, rules):
                     allmatches.append(m)
 
     fh.close()
-    if allmatches:
-        print path, allmatches 
- 
+    matches = check_hashes(path, rules)
+    for m in matches:
+        allmatches.append(m)
 
+    if allmatches:
+        print path, allmatches
 
 def run(path, includefilter):
     ifre = re.compile(includefilter)
-    if os.path.isdir(path): 
+    if os.path.isdir(path):
         for root, dirs, files in os.walk(path):
             for f in files:
                 if os.path.islink(root+'/'+f): continue
@@ -128,5 +164,4 @@ config = validate_patterns(config)
 
 run(path, includefilter)
 
-#cProfile.run('run(sys.argv[2])')
-
+#cProfile.run('run(path, includefilter)')
