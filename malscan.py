@@ -12,16 +12,13 @@ def validate_patterns(rules):
     nc = {}
     for rule, conf in rules.items():
         nc[rule] = {'sha256':[], 'patterns':[], 'excludes':[], 'exact':False, 'sensitive':False}
-        sensitive = 0
-        exact = False
+        (sensitive, exact) = (0, False)
         if 'exact' in conf:
             if conf['exact'] == 'yes':
-                nc[rule]['exact'] = True
-                exact = True
+                (nc[rule]['exact'], exact) = (True, True)
         if 'sensitive' in conf:
             if conf['sensitive'] == 'yes':
-                nc[rule]['sensitive'] = True
-                sensitive = True
+                (nc[rule]['sensitive'], sensitive) = (True, True)
         if exact:
             nc[rule]['patterns'] = conf['patterns']
             if 'excludes' in conf:
@@ -69,8 +66,7 @@ def validate_patterns(rules):
 def chk_line(line, rules):
     matches = []
     for rule, conf in rules.items():
-        ematch = 0
-        failed = 0
+        (ematch, failed) = (0, 0)
         # It's a hashlib check only
         if not conf['patterns']:
             continue
