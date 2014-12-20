@@ -150,7 +150,7 @@ def process(path, rules):
         return True
     return False
 
-def run(path, includefilter, config, printstatus):
+def run(path, includefilter, config, printpass):
     ifre = re.compile(includefilter)
     if os.path.isdir(path):
         for root, dirs, files in os.walk(path):
@@ -158,23 +158,23 @@ def run(path, includefilter, config, printstatus):
                 if os.path.islink(root+'/'+f): continue
                 if ifre.search(f):
                     status = process(root+'/'+f, config)
-                    if printstatus and not status:
+                    if printpass and not status:
                         sys.stderr.write(root+'/'+f+" OK\n")
     else:
         status = process(path, config)
-        if printstatus and not status:
+        if printpass and not status:
             sys.stderr.write(path+" OK\n")
 
 def usage():
     print "usage: malscan <rules> <filter> <path>"
     sys.exit(1)
 
-def main(scanpath, includefilter, ruleset, printstatus=False):
+def main(scanpath, includefilter, ruleset, printpass=False):
     path = scanpath
     includefilter = includefilter
     config = readconf(ruleset)
     config = validate_patterns(config)
-    run(path, includefilter, config, printstatus)
+    run(path, includefilter, config, printpass)
     #cProfile.run('run(path, includefilter, config)')
 
 if __name__ == "__main__":
@@ -190,6 +190,6 @@ if __name__ == "__main__":
         parser.add_argument('-p', '--printpass', required=False, dest='printpass',
             help='Print OK files to stderr', action='store_true')
         args = parser.parse_args()
-        main(args.scanpath, args.includefilter, args.ruleset, args.printstatus)
+        main(args.scanpath, args.includefilter, args.ruleset, args.printpass)
     except KeyboardInterrupt:
         sys.exit(1)
