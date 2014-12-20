@@ -126,11 +126,7 @@ def check_hashes(fpath, rules):
 
 def process(path, rules):
     fh = open(path)
-    #data = open(path).read()
     allmatches = []
-    #matches = chk_line(data, rules)
-    #if matches:
-    #    print path, matches
     for line in fh:
         matches = chk_line(line, rules)
         if matches:
@@ -146,7 +142,7 @@ def process(path, rules):
     if allmatches:
         print path, allmatches
 
-def run(path, includefilter):
+def run(path, includefilter, config):
     ifre = re.compile(includefilter)
     if os.path.isdir(path):
         for root, dirs, files in os.walk(path):
@@ -157,11 +153,24 @@ def run(path, includefilter):
     else:
         process(path, config)
 
-path = sys.argv[3]
-includefilter = sys.argv[2]
-config = readconf(sys.argv[1])
-config = validate_patterns(config)
+def usage():
+    print "usage: malscan <rules> <filter> <path>"
+    sys.exit(1)
 
-run(path, includefilter)
+def main(scanpath, includefilter, ruleset):
+    path = scanpath
+    includefilter = includefilter
+    config = readconf(ruleset)
+    config = validate_patterns(config)
+    run(path, includefilter, config)
+    #cProfile.run('run(path, includefilter, config)')
 
-#cProfile.run('run(path, includefilter)')
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--ruleset', required=True, dest='ruleset')
+    parser.add_argument('-f', '--file-regex', required=True, dest='includefilter')
+    parser.add_argument('-p', '--scanpath', required=True, dest='scanpath')
+    args = parser.parse_args()
+    main(args.scanpath, args.includefilter, args.ruleset)
