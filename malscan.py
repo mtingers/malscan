@@ -177,10 +177,13 @@ def main(scanpath, includefilter, ruleset):
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--ruleset', required=True, dest='ruleset')
-    parser.add_argument('-f', '--file-regex', required=True, dest='includefilter')
-    parser.add_argument('-p', '--scanpath', required=True, dest='scanpath')
-    args = parser.parse_args()
-    main(args.scanpath, args.includefilter, args.ruleset)
+    try:
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-r', '--ruleset', required=True, dest='ruleset')
+        parser.add_argument('-f', '--file-regex', required=True, dest='includefilter')
+        parser.add_argument('-p', '--scanpath', required=True, dest='scanpath')
+        args = parser.parse_args()
+        main(args.scanpath, args.includefilter, args.ruleset)
+    except KeyboardInterrupt:
+        sys.exit(1)
