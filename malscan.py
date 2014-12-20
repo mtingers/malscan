@@ -104,7 +104,12 @@ def chk_line(line, rules):
 
 def hashfile(fname, blocksize=65536):
     import hashlib
-    f = open(fname, 'rb')
+    try:
+        f = open(fname, 'rb')
+    except IOError, e:
+        print e
+        return ''
+
     hasher = hashlib.sha256()
     buf = f.read(blocksize)
     while len(buf) > 0:
@@ -125,7 +130,12 @@ def check_hashes(fpath, rules):
     return matches
 
 def process(path, rules):
-    fh = open(path)
+    try:
+        fh = open(path)
+    except IOError, e:
+        print e
+        return
+
     allmatches = []
     for line in fh:
         matches = chk_line(line, rules)
