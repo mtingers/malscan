@@ -103,7 +103,7 @@ def hashfile(fname, blocksize=65536):
     try:
         f = open(fname, 'rb')
     except IOError, e:
-        print e
+        sys.stderr.write("%s\n" % (e))
         return ''
 
     hasher = hashlib.sha256()
@@ -129,8 +129,8 @@ def process(path, rules):
     try:
         fh = open(path)
     except IOError, e:
-        print e
-        return
+        sys.stderr.write("%s\n" % (e))
+        return False
 
     allmatches = []
     for line in fh:
@@ -147,39 +147,49 @@ def process(path, rules):
 
     if allmatches:
         print path, allmatches
+        return True
+    return False
 
-def run(path, includefilter, config):
+def run(path, includefilter, config, printstatus):
     ifre = re.compile(includefilter)
     if os.path.isdir(path):
         for root, dirs, files in os.walk(path):
             for f in files:
                 if os.path.islink(root+'/'+f): continue
                 if ifre.search(f):
-                    process(root+'/'+f, config)
+                    status = process(root+'/'+f, config)
+                    if printstatus and not status:
+                        sys.stderr.write(root+'/'+f+" OK\n")
     else:
-        process(path, config)
+        status = process(path, config)
+        if printstatus and not status:
+            sys.stderr.write(path+" OK\n")
 
 def usage():
     print "usage: malscan <rules> <filter> <path>"
     sys.exit(1)
 
-def main(scanpath, includefilter, ruleset):
+def main(scanpath, includefilter, ruleset, printstatus=False):
     path = scanpath
     includefilter = includefilter
     config = readconf(ruleset)
     config = validate_patterns(config)
-    run(path, includefilter, config)
+    run(path, includefilter, config, printstatus)
     #cProfile.run('run(path, includefilter, config)')
-
 
 if __name__ == "__main__":
     try:
         import argparse
         parser = argparse.ArgumentParser()
-        parser.add_argument('-r', '--ruleset', required=True, dest='ruleset')
-        parser.add_argument('-f', '--file-regex', required=True, dest='includefilter')
-        parser.add_argument('-p', '--scanpath', required=True, dest='scanpath')
+        parser.add_argument('-r', '--ruleset', required=True, dest='ruleset',
+            help='The path to rule definition file')
+        parser.add_argument('-f', '--file-regex', required=True, dest='includefilter',
+            help='Scan files matching this regex pattern')
+        parser.add_argument('-s', '--scanpath', required=True, dest='scanpath',
+            help='The file or directory to scan')
+        parser.add_argument('-p', '--printpass', required=False, dest='printpass',
+            help='Print OK files to stderr', action='store_true')
         args = parser.parse_args()
-        main(args.scanpath, args.includefilter, args.ruleset)
+        main(args.scanpath, args.includefilter, args.ruleset, args.printstatus)
     except KeyboardInterrupt:
         sys.exit(1)
