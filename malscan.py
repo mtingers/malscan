@@ -165,10 +165,6 @@ def run(path, includefilter, config, printpass):
         if printpass and not status:
             sys.stderr.write(path+" OK\n")
 
-def usage():
-    print "usage: malscan <rules> <filter> <path>"
-    sys.exit(1)
-
 def main(scanpath, includefilter, ruleset, printpass=False):
     path = scanpath
     includefilter = includefilter
